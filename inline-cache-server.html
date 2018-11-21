@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Service Worker Test</title>
+
+    <script>
+      // Register the service worker
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker
+          .register("./sw.js", {
+            scope: "/"
+          })
+          .then(function() {
+            console.log("Service Worker Registered");
+          })
+          .catch(function() {
+            console.log("Service Worker Failed to Registered");
+          });
+      }
+    </script>
+  </head>
+  <body>
+	<button id="oneway">One Way</button> 
+	<button id="twoway">Two Way</button>
+  </body>
+
+  <script>
+    let oneway = document.querySelector("#oneway");
+	let twoway = document.querySelector("#twoway");
+	
+    if (navigator.serviceWorker.controller) {
+	
+	  oneway.addEventListener("click", function() {
+        navigator.serviceWorker.controller.postMessage({
+          command: "oneWayCommunication",
+          message: "Hi, SW"
+        });
+      });
+	
+	  twoway.addEventListener("click", function() {
+		var messageChannel = new MessageChannel();
+
+		// port 1 is local to listen
+        messageChannel.port1.onmessage = function(event) {
+          console.log("SW: ", event.data.message);
+        };
+
+		// port 2 is the remote port listening in this case the service worker
+        navigator.serviceWorker.controller.postMessage({
+            command: "twoWayCommunication",
+            message: "Hi, SW"
+          }, [messageChannel.port2]
+		);
+		
+      });
+    } else {
+      console.log("No ServiceWorker");
+    }
+  </script>
+</html>
